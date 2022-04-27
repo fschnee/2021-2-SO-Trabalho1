@@ -84,6 +84,13 @@ private:
     inline auto go_down_lines(kol::u64 count) -> void
     { while(1 + count--) std::printf("\033[E"); }
 
+    inline auto printf_on_line(kol::u64 line, const char* fmt, auto&&... args)
+    {
+        go_up_lines(line);
+        std::printf(fmt, std::forward< decltype(args) >(args)...);
+        go_down_lines(line);
+    }
+
     inline auto output() -> bool
     {
         auto n = notification{};
@@ -97,86 +104,47 @@ private:
         }
 
         n.on<started_preparing_meal>([&](auto& n)
-        {
-            go_up_lines(n.employee_id);
-            std::printf("%lu: Preparing meal", n.employee_id);
-            go_down_lines(n.employee_id);
-        }
+        { printf_on_line(n.employee_id, "%lu: Preparing meal", n.employee_id); }
         ).on<done_preparing_meal>([&](auto& n)
-        {
-            go_up_lines(n.employee_id);
-            std::printf("%lu: Preparation done, waiting to place meal", n.employee_id);
-            go_down_lines(n.employee_id);
-        }
+        { printf_on_line(n.employee_id, "%lu: Preparation done, waiting to place meal", n.employee_id); }
         ).on<placing_meal_in_trunk>([&](auto& n)
         {
             ++meals_in_trunk;
 
-            go_up_lines(n.employee_id);
-            std::printf("%lu: Placing meal in the trunk", n.employee_id);
-            go_down_lines(n.employee_id);
-
-            go_up_lines(employee_count);
-            std::printf("DELIVERYMAN: [%lu/10] Zzz...", meals_in_trunk);
-            go_down_lines(employee_count);
+            printf_on_line(n.employee_id, "%lu: Placing meal in the trunk", n.employee_id);
+            printf_on_line(employee_count, "DELIVERYMAN: [%lu/10] Zzz...", meals_in_trunk);
         }
         ).on<waking_up_deliveryman>([&](auto& n)
         {
-            go_up_lines(n.employee_id);
-            std::printf("%lu: Waking up deliveryman", n.employee_id);
-            go_down_lines(n.employee_id);
-
-            go_up_lines(employee_count);
-            std::printf("DELIVERYMAN: [%lu/10] Waking up", meals_in_trunk);
-            go_down_lines(employee_count);
+            printf_on_line(n.employee_id, "%lu: Waking up deliveryman", n.employee_id);
+            printf_on_line(employee_count, "DELIVERYMAN: [%lu/10] Waking up", meals_in_trunk);
         }
         ).on<deliveryman_left>([&](auto&)
-        {
-            go_up_lines(employee_count);
-            std::printf("DELIVERYMAN: [%lu/10] Started delivery", meals_in_trunk);
-            go_down_lines(employee_count);
-        }
+        { printf_on_line(employee_count, "DELIVERYMAN: [%lu/10] Started delivery", meals_in_trunk); }
         ).on<meal_delivered>([&](auto& n)
         {
             --meals_in_trunk;
             ++deliveries_done;
 
-            go_up_lines(employee_count + 1);
-            if(!closing_up_shop)
-                std::printf("STATUS: [%lu] Restaurants are open", deliveries_done);
-            else
-                std::printf("STATUS: [%lu] Closing up shop!", deliveries_done);
-            go_down_lines(employee_count + 1);
+            printf_on_line(
+                employee_count + 1,
+                (closing_up_shop ? "STATUS: [%lu] Closing up shop!" : "STATUS: [%lu] Restaurants are open"),
+                deliveries_done
+            );
 
-            go_up_lines(employee_count);
-            std::printf("DELIVERYMAN: [%lu/10] Delivered meal from %lu", meals_in_trunk, n.employee_id);
-            go_down_lines(employee_count);
+            printf_on_line(employee_count, "DELIVERYMAN: [%lu/10] Delivered meal from %lu", meals_in_trunk, n.employee_id);
         }
         ).on<deliveryman_returning>([&](auto&)
-        {
-            go_up_lines(employee_count);
-            std::printf("DELIVERYMAN: [%lu/10] Returning", meals_in_trunk);
-            go_down_lines(employee_count);
-        }
+        { printf_on_line(employee_count, "DELIVERYMAN: [%lu/10] Returning", meals_in_trunk); }
         ).on<deliveryman_returned>([&](auto&)
-        {
-            go_up_lines(employee_count);
-            std::printf("DELIVERYMAN: [%lu/10] Zzz...", meals_in_trunk);
-            go_down_lines(employee_count);
-        }
+        { printf_on_line(employee_count, "DELIVERYMAN: [%lu/10] Zzz...", meals_in_trunk); }
         ).on<close_up_shop>([&](auto&)
         {
             closing_up_shop = true;
-            go_up_lines(employee_count + 1);
-            std::printf("STATUS: [%lu] Closing up shop!", deliveries_done);
-            go_down_lines(employee_count + 1);
+            printf_on_line(employee_count + 1, "STATUS: [%lu] Closing up shop!", deliveries_done);
         }
         ).on<closed_up_shop>([&](auto& n)
-        {
-            go_up_lines(n.employee_id);
-            std::printf("%lu: Closed up shop\n", n.employee_id);
-            go_down_lines(n.employee_id);
-        });
+        { printf_on_line(n.employee_id, "%lu: Closed up shop\n", n.employee_id); });
 
         std::fflush(stdout);
 
