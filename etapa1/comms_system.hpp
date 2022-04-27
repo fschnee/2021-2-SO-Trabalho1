@@ -46,7 +46,7 @@ struct comms_system
         std::printf("-- Press Ctrl+C to close up shop (will need to wait for all the deliveries to be dispatched)\n\n");
 
         std::printf("STATUS: [%lu] Restaurants are open\n", deliveries_done);
-        for(auto i = 0; i < employee_count + 1; ++i) std::printf("\n");
+        for(auto i = kol::u64{0}; i < employee_count + 1; ++i) std::printf("\n");
 
         go_up_lines(employee_count);
         std::printf("DELIVERYMAN: [%lu/10] Zzz...", meals_in_trunk);
@@ -54,13 +54,13 @@ struct comms_system
         std::fflush(stdout);
     }
 
-    constexpr auto notify(notification&& _notification)
+    inline auto notify(notification&& _notification)
     {
         notifications.read([&](auto& ns){ ns.push( std::move(_notification) ); });
         ready_output_signal.release();
     }
 
-    constexpr auto flush_output() -> void
+    inline auto flush_output() -> void
     {
         while(output()) {;}
         ready_output_signal.acquire();
