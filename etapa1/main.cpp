@@ -37,7 +37,7 @@ int main(int argc, const char* argv[])
     });
     std::signal(SIGABRT, []([[maybe_unused]] int signal) { std::exit(1); });
 
-    auto employee_count = u64{4};
+    auto employee_count = u64{8};
 
     auto parked_trunk        = guarded< std::vector<meal> >{};
     auto employees           = std::vector< std::jthread >{ employee_count };
